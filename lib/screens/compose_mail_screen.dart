@@ -25,7 +25,6 @@ class _ComposeMailScreenState extends State<ComposeMailScreen> {
               const SnackBar(content: Text('Email sent successfully')),
             );
 
-            // ✅ Reset form and attachments
             _formKey.currentState?.reset();
             setState(() {
               _attachmentPaths.clear();
