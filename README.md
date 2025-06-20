@@ -1,5 +1,35 @@
-# mail_sending_app
+# 📧 Flutter Mail Sending App
 
+A Flutter application that allows users to compose and send emails with subject, body, attachments (images, videos, documents), and recipient email — using SMTP integration with Bloc state management.
+
+## 🚀 Features
+
+- Compose and send emails directly via SMTP
+- Add subject, body, and recipient email
+- Pick multiple attachments (images, videos, docs)
+- Attachment previews with thumbnail and remove option
+- Form validation
+- Bloc architecture for state management
+- Environment variable-based credentials (secure with `.env`)
+
+## 🧰 Tech Stack
+
+- Flutter
+- Bloc
+- `mailer` package
+- `file_picker` for attachments
+- `flutter_dotenv` for credentials
+
+---
+
+
+## 🛠 Installation & Setup
+
+1. **Clone the repo:**
+
+```bash
+git clone https://github.com/raees-reapmind/Mail_Sending_App.git
+cd flutter-mail-sender
 A new Flutter project.
 
 ## Getting Started
