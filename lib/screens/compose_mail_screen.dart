@@ -11,9 +11,8 @@ class ComposeMailScreen extends StatefulWidget {
 
 class _ComposeMailScreenState extends State<ComposeMailScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _subject, _body, _recipient, _attachmentPath;
+  String? _subject, _body, _recipient;
   List<String> _attachmentPaths = [];
-
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +24,16 @@ class _ComposeMailScreenState extends State<ComposeMailScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Email sent successfully')),
             );
+
+            // ✅ Reset form and attachments
+            _formKey.currentState?.reset();
+            setState(() {
+              _attachmentPaths.clear();
+              _subject = null;
+              _body = null;
+              _recipient = null;
+              _attachmentPaths = [];
+            });
           } else if (state is MailSentFailureState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Failed: ${state.error}')),
@@ -39,10 +48,12 @@ class _ComposeMailScreenState extends State<ComposeMailScreen> {
               child: ListView(
                 children: [
                   TextFormField(
-                    decoration: const InputDecoration(labelText: 'Recipient Email'),
+                    decoration:
+                        const InputDecoration(labelText: 'Recipient Email'),
                     onSaved: (value) => _recipient = value,
                     validator: (value) {
-                      if (value == null || !value.contains('@')) return 'Invalid email';
+                      if (value == null || !value.contains('@'))
+                        return 'Invalid email';
                       return null;
                     },
                   ),
@@ -58,22 +69,56 @@ class _ComposeMailScreenState extends State<ComposeMailScreen> {
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
                     onPressed: () async {
-                      final result = await FilePicker.platform.pickFiles();
+                      final result = await FilePicker.platform.pickFiles(
+                        allowMultiple: true,
+                      );
                       if (result != null) {
                         setState(() {
-                          _attachmentPath = result.files.single.path!;
+                          _attachmentPaths =
+                              result.paths.whereType<String>().toList();
                         });
                       }
                     },
                     icon: const Icon(Icons.attach_file),
-                    label: const Text('Pick Attachment'),
+                    label: const Text('Pick Attachments'),
                   ),
-                 if (_attachmentPath != null && File(_attachmentPath!).existsSync())
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12.0),
-                      child: _buildAttachmentPreview(_attachmentPath!),
+                  if (_attachmentPaths.isNotEmpty)
+                    SizedBox(
+                      height: 100,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _attachmentPaths.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final path = _attachmentPaths[index];
+                          return Stack(
+                            children: [
+                              _buildAttachmentPreview(path),
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _attachmentPaths.removeAt(index);
+                                    });
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.6),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Icon(Icons.close,
+                                        size: 16, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
-
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
@@ -85,7 +130,7 @@ class _ComposeMailScreenState extends State<ComposeMailScreen> {
                                 subject: _subject ?? '',
                                 body: _body ?? '',
                                 recipient: _recipient!,
-                                attachmentPath: _attachmentPath,
+                                attachmentPaths: _attachmentPaths,
                               ),
                             );
                       }
@@ -103,37 +148,43 @@ class _ComposeMailScreenState extends State<ComposeMailScreen> {
     );
   }
 
-
   Widget _buildAttachmentPreview(String path) {
-  final extension = path.split('.').last.toLowerCase();
+    final extension = path.split('.').last.toLowerCase();
+    final isImage =
+        ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(extension);
 
-  final isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(extension);
-
-  if (isImage) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Image.file(
-        File(path),
-        height: 100,
-        width: 100,
-        fit: BoxFit.cover,
-      ),
-    );
-  } else {
-    return Row(
-      children: [
-        const Icon(Icons.insert_drive_file, size: 32),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            path.split('/').last,
-            style: const TextStyle(fontSize: 14),
-            overflow: TextOverflow.ellipsis,
-          ),
+    if (isImage && File(path).existsSync()) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.file(
+          File(path),
+          width: 80,
+          height: 80,
+          fit: BoxFit.cover,
         ),
-      ],
-    );
+      );
+    } else {
+      return Container(
+        width: 80,
+        height: 80,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.insert_drive_file, size: 32),
+            Text(
+              path.split('/').last,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10),
+            ),
+          ],
+        ),
+      );
+    }
   }
-}
-
 }

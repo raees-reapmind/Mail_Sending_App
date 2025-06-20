@@ -31,11 +31,14 @@ class MailBloc extends Bloc<MailEvent,MailState>{
       ..subject = event.subject
       ..text = event.body;
 
-    log('Sending email...To: ${event.recipient} Subject: ${event.subject} Body: ${event.body} Attachment: ${event.attachmentPath ?? "No attachment"}');
+    log('Sending email...To: ${event.recipient} Subject: ${event.subject} Body: ${event.body} Attachment: ${event.attachmentPaths ?? "No attachment"}');
 
-    if (event.attachmentPath != null) {
-      message.attachments.add(FileAttachment(File(event.attachmentPath!)));
+      for (final path in event.attachmentPaths!) {
+      if (File(path).existsSync()) {
+        message.attachments.add(FileAttachment(File(path)));
+      }
     }
+
 
     try {
       await send(message, smtpServer);
